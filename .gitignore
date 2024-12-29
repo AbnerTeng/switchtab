@@ -1,3 +1,11 @@
+# Not want to push these files to github
+wandb/
+notebooks/
+hello.py
+
+# MacOS system files
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

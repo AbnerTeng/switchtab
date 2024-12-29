@@ -1,0 +1,32 @@
+data:
+  data_name: ca
+  data_seed: 0
+  batch_size: 128
+  data_dir: "data"
+
+encoder:
+  d_model: 8
+  num_heads: 2
+
+label_pretrainer:
+  input_dim: 8
+  hidden_dims: [8]
+  n_hiddens: 1
+  output_dim: 1
+  dropout_rate: 0.1
+  use_batch_norm: true
+
+optimizer:
+  rmsprop:
+    lr: 0.0003
+  adam:
+    lr: 0.001
+
+trainer:
+  pretrain:
+    n_epochs: 1000
+    alpha: 1
+    print_interval: 50
+  finetune:
+    n_epochs: 200
+    print_interval: 10
