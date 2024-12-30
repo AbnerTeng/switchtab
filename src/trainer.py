@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
@@ -38,6 +39,7 @@ class SwitchTabTrainer:
 
         for epoch in track(range(self.train_config["n_epochs"])):
             total_loss = torch.tensor(0.0).to(self.encoder.device)
+            loss_seq = []
 
             for x1_batch, x2_batch in zip(self.train_loader1, self.train_loader2):
                 x1_batch, x2_batch = (
@@ -71,6 +73,8 @@ class SwitchTabTrainer:
                 else:
                     total_loss = ssl_loss
 
+                loss_seq.append(total_loss.item())
+
                 if self.wandb is not None:
                     self.wandb.log(
                         {
@@ -85,8 +89,9 @@ class SwitchTabTrainer:
                 total_loss.backward()
                 self.optimizer.step()
 
+
             if (epoch + 1) % self.train_config["print_interval"] == 0:
-                rp(f"Epoch: {epoch + 1}, Loss: {total_loss.item():.4f}")
+                rp(f"Epoch: {epoch + 1}, Loss: {np.mean(loss_seq):.4f}")
 
     def finetune(self) -> None:
         pass

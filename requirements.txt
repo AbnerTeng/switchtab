@@ -2,3 +2,4 @@ argparse==1.4.0
 PyYAML==6.0.2
 rich==13.9.4
 wandb==0.15.3
+scikit-learn==1.5.1
