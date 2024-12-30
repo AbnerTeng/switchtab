@@ -4,10 +4,6 @@ Unofficial implementation of "SwitchTab: Switched Autoencoders Are Effective Tab
 
 ## Installation
 
-### Install torch 2.2.1
-
-1. Install torch 2.2.1 manually from [source](https://pytorch.org/get-started/previous-versions/)
-
 ### Install packages via `uv`
 
 Install [uv](https://github.com/astral-sh/uv) for package management
@@ -25,6 +21,12 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+### Install torch manually
+
+Install torch with compatible cuda version manually from [source](https://pytorch.org/get-started/previous-versions/)
+
+* Make sure to start with `uv pip install` if you are using `uv` for package management.
 
 ## Usage
 
