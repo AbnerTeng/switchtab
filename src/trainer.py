@@ -37,6 +37,8 @@ class SwitchTabTrainer:
         self.ssl_framework.train()
         self.label_pretrainer.train()
 
+        best_loss = np.inf
+
         for epoch in track(range(self.train_config["n_epochs"])):
             total_loss = torch.tensor(0.0).to(self.encoder.device)
             loss_seq = []
@@ -67,8 +69,12 @@ class SwitchTabTrainer:
                 if not ssl_only:
                     pred_x1, pred_x2 = self.label_pretrainer(encoded_x1, encoded_x2)
                     label_loss = self.label_criterion(
-                        y1_batch, pred_x1
-                    ) + self.label_criterion(y2_batch, pred_x2)
+                        y1_batch.unsqueeze(1),
+                        pred_x1
+                    ) + self.label_criterion(
+                        y2_batch.unsqueeze(1),
+                        pred_x2
+                    )
                     total_loss = ssl_loss + self.train_config["alpha"] * label_loss
                 else:
                     total_loss = ssl_loss
@@ -91,6 +97,19 @@ class SwitchTabTrainer:
 
             if (epoch + 1) % self.train_config["print_interval"] == 0:
                 rp(f"Epoch: {epoch + 1}, Avg Loss: {np.mean(loss_seq):.4f}")
+
+            if np.mean(loss_seq) < best_loss:
+                best_loss = np.mean(loss_seq)
+                rp(f"Saving best model on epoch: {epoch + 1} | Loss: {best_loss:.4f}")
+                ssl_only_str: str = "ssl" if ssl_only else "ssl_label"
+                torch.save(
+                    {
+                        "encoder": self.encoder.state_dict(),
+                        "ssl_framework": self.ssl_framework.state_dict(),
+                        "label_pretrainer": self.label_pretrainer.state_dict(),
+                    },
+                    f"model/best_model_{ssl_only_str}.pth",
+                )
 
     def finetune(self) -> None:
         pass

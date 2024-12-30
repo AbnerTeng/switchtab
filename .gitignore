@@ -1,4 +1,5 @@
 # Not want to push these files to github
+model/
 wandb/
 notebooks/
 hello.py

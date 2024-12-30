@@ -40,19 +40,18 @@ wandb login
 Execute pre-training script
 
 ```bash
-python -m src.main --config_path config/settings.yaml --ssl_only --project-name switchtab --run-name pretrain-ssl-only
+python -m src.main --config_path config/settings.yaml --device cuda:0 --ssl_only --wandb_track  --project-name switchtab --run-name pretrain-ssl-only
 ```
 
 or
 
 ```bash
-uv run python -m src.main --config_path config/settings.yaml --ssl_only --project-name switchtab --run-name pretrain-ssl-only
+uv run python -m src.main --config_path config/settings.yaml --device cpu --ssl_only --wandb_track --project-name switchtab --run-name pretrain-ssl-only
 ```
 
 if you have `uv` installed and activated.
 
 ## Further Issue
 
-[ ] save model checkpoint
-[ ] finetuning code
-[ ] experiments from original paper
+* [ ] finetuning code
+* [ ] experiments from original paper

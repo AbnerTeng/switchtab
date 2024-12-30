@@ -13,9 +13,9 @@ from .component import (
 
 
 class DataEncoder(nn.Module):
-    def __init__(self, encoder_config: Dict[str, Any], device: str) -> None:
+    def __init__(self, d_model: int, device: str) -> None:
         super().__init__()
-        self.encoder = TFMEncoder(**encoder_config)
+        self.encoder = TFMEncoder(d_model=d_model)
         self.device = device
 
     def forward(

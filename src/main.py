@@ -65,7 +65,7 @@ if __name__ == "__main__":
     tr_loader2, _, col_cat_count2, label_cat_count2 = load_training_data(
         **settings["data"]
     )
-    encoder = DataEncoder(settings["encoder"], device)
+    encoder = DataEncoder(len(col_cat_count1), device)
     ssl_framework = SSLFramework(
         len(col_cat_count1), 1 if label_cat_count1 == -1 else label_cat_count1
     )
