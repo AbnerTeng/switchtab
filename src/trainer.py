@@ -41,14 +41,14 @@ class SwitchTabTrainer:
             total_loss = torch.tensor(0.0).to(self.encoder.device)
             loss_seq = []
 
-            for x1_batch, x2_batch in zip(self.train_loader1, self.train_loader2):
+            for xy1_batch, xy2_batch in zip(self.train_loader1, self.train_loader2):
                 x1_batch, x2_batch = (
-                    x1_batch[0].to(torch.float32),
-                    x2_batch[0].to(torch.float32),
+                    xy1_batch[0].to(self.encoder.device),
+                    xy2_batch[0].to(self.encoder.device),
                 )
-                x1_batch, x2_batch = (
-                    x1_batch.to(self.encoder.device),
-                    x2_batch.to(self.encoder.device),
+                y1_batch, y2_batch = (
+                    xy1_batch[1].to(self.encoder.device),
+                    xy2_batch[1].to(self.encoder.device),
                 )
                 encoded_x1, encoded_x2 = self.encoder(x1_batch, x2_batch)
                 recovered_x1, switched_x1, recovered_x2, switched_x2 = (
@@ -67,8 +67,8 @@ class SwitchTabTrainer:
                 if not ssl_only:
                     pred_x1, pred_x2 = self.label_pretrainer(encoded_x1, encoded_x2)
                     label_loss = self.label_criterion(
-                        x1_batch, pred_x1
-                    ) + self.label_criterion(x2_batch, pred_x2)
+                        y1_batch, pred_x1
+                    ) + self.label_criterion(y2_batch, pred_x2)
                     total_loss = ssl_loss + self.train_config["alpha"] * label_loss
                 else:
                     total_loss = ssl_loss
@@ -89,9 +89,8 @@ class SwitchTabTrainer:
                 total_loss.backward()
                 self.optimizer.step()
 
-
             if (epoch + 1) % self.train_config["print_interval"] == 0:
-                rp(f"Epoch: {epoch + 1}, Loss: {np.mean(loss_seq):.4f}")
+                rp(f"Epoch: {epoch + 1}, Avg Loss: {np.mean(loss_seq):.4f}")
 
     def finetune(self) -> None:
         pass
