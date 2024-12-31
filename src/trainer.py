@@ -19,6 +19,7 @@ class SwitchTabTrainer:
         ssl_criterion: Any,
         label_criterion: Any,
         optimizer: torch.optim.Optimizer,
+        scheduler: Any,
         train_config: Dict[str, Any],
     ) -> None:
         self.train_loader1 = train_loader1
@@ -29,10 +30,11 @@ class SwitchTabTrainer:
         self.ssl_criterion = ssl_criterion
         self.label_criterion = label_criterion
         self.optimizer = optimizer
+        self.scheduler = scheduler
         self.train_config = train_config
         self.wandb = None
 
-    def train(self, ssl_only: bool) -> None:
+    def train(self, ssl_only: bool, data_name: str) -> None:
         self.encoder.train()
         self.ssl_framework.train()
         self.label_pretrainer.train()
@@ -68,12 +70,20 @@ class SwitchTabTrainer:
 
                 if not ssl_only:
                     pred_x1, pred_x2 = self.label_pretrainer(encoded_x1, encoded_x2)
+
+                    if pred_x1.shape[1] > 1 and pred_x2.shape[1] > 1:
+                        pred_x1 = torch.argmax(pred_x1, dim=1)
+                        pred_x2 = torch.argmax(pred_x2, dim=1)
+                    else:
+                        pred_x1 = pred_x1.squeeze(1)
+                        pred_x2 = pred_x2.squeeze(1)
+
                     label_loss = self.label_criterion(
-                        y1_batch.unsqueeze(1),
-                        pred_x1
+                        y1_batch.to(torch.float32),
+                        pred_x1.to(torch.float32)
                     ) + self.label_criterion(
-                        y2_batch.unsqueeze(1),
-                        pred_x2
+                        y2_batch.to(torch.float32),
+                        pred_x2.to(torch.float32)
                     )
                     total_loss = ssl_loss + self.train_config["alpha"] * label_loss
                 else:
@@ -95,6 +105,8 @@ class SwitchTabTrainer:
                 total_loss.backward()
                 self.optimizer.step()
 
+            self.scheduler.step()
+
             if (epoch + 1) % self.train_config["print_interval"] == 0:
                 rp(f"Epoch: {epoch + 1}, Avg Loss: {np.mean(loss_seq):.4f}")
 
@@ -108,7 +120,7 @@ class SwitchTabTrainer:
                         "ssl_framework": self.ssl_framework.state_dict(),
                         "label_pretrainer": self.label_pretrainer.state_dict(),
                     },
-                    f"model/best_model_{ssl_only_str}.pth",
+                    f"model/{data_name}_best_model_{ssl_only_str}.pth",
                 )
 
     def finetune(self) -> None:

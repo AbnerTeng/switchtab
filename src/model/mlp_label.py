@@ -14,32 +14,31 @@ class LabelPretrainer(nn.Module):
         config (Dict[str, Any]): Configuration dictionary.
     """
 
-    def __init__(self, input_dim: int, output_dim: int, config: Dict[str, Any]) -> None:
+    def __init__(
+        self,
+        input_dim: int,
+        hidden_dim: int,
+        output_dim: int,
+        config: Dict[str, Any]
+    ) -> None:
         super().__init__()
         self.input_dim = input_dim
+        self.hidden_dim = hidden_dim,
         self.output_dim = output_dim
         self.config = config
-
-        layers: List[nn.Module] = []
 
         if self.config["use_batch_norm"]:
             batch_norm = nn.BatchNorm1d
         else:
             batch_norm = nn.Identity
 
-        if isinstance(self.config["hidden_dims"], int):
-            self.config["hidden_dims"] = [self.config["hidden_dims"]]
-
-        for i in range(self.config["n_hiddens"] - 1):
-            layers.append(nn.Linear(self.input_dim, self.config["hidden_dims"][i]))
-            layers.append(batch_norm(self.config["hidden_dims"][i]))
-            layers.append(nn.ReLU())
-            layers.append(nn.Dropout(config["dropout_rate"]))
-            self.input_dim = self.config["hidden_dims"][i]
-
-        layers.append(nn.Linear(self.config["hidden_dims"][-1], self.output_dim))
-
-        self.model = nn.Sequential(*layers)
+        self.model = nn.Sequential(
+            nn.Linear(self.input_dim, self.hidden_dim),
+            batch_norm(self.hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(config["dropout_rate"]),
+            nn.Linear(self.hidden_dim, self.output_dim)
+        )
 
     def forward(
         self, encoded_x1: torch.Tensor, encoded_x2: torch.Tensor

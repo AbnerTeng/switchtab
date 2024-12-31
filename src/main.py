@@ -4,7 +4,7 @@ from argparse import ArgumentParser, Namespace
 import wandb
 import torch
 from torch import nn
-from torch.optim import RMSprop
+from torch.optim import RMSprop, AdamW
 
 from .trainer import SwitchTabTrainer
 from .utils import load_config
@@ -35,7 +35,6 @@ def init_wandb(args: Namespace, device: str, settings: Dict[str, Any]) -> None:
         name=args.run_name,
         config={
             "device": device,
-            "encoder_config": settings["encoder"],
             "optimizer": settings["optimizer"],
             "trainer": settings["trainer"],
             "data": settings["data"],
@@ -45,6 +44,7 @@ def init_wandb(args: Namespace, device: str, settings: Dict[str, Any]) -> None:
 
 
 if __name__ == "__main__":
+    torch.manual_seed(0)
     args = get_args()
 
     if args.device == "mps" and torch.backends.mps.is_available():
@@ -71,6 +71,7 @@ if __name__ == "__main__":
     )
     label_pretrainer = LabelPretrainer(
         len(col_cat_count1),
+        len(col_cat_count1),
         1 if label_cat_count1 == -1 else label_cat_count1,
         settings["label_pretrainer"],
     )
@@ -81,6 +82,17 @@ if __name__ == "__main__":
     if args.wandb_track:
         wandb.watch((encoder, ssl_framework, label_pretrainer), log="all", log_freq=100)
 
+    optimizer = AdamW(
+        list(encoder.parameters())
+        + list(ssl_framework.parameters())
+        + list(label_pretrainer.parameters()),
+        **settings["optimizer"]["adamw"],
+    )
+    scheduler = torch.optim.lr_scheduler.LambdaLR(
+        optimizer=optimizer,
+        lr_lambda=lambda steps: min((steps + 1) / settings["optimizer"]["warmup"], 1),
+    )
+
     trainer = SwitchTabTrainer(
         tr_loader1,
         tr_loader2,
@@ -89,12 +101,8 @@ if __name__ == "__main__":
         label_pretrainer,
         ReconstructLoss(),
         nn.CrossEntropyLoss() if label_cat_count1 != -1 else nn.MSELoss(),
-        RMSprop(
-            list(encoder.parameters())
-            + list(ssl_framework.parameters())
-            + list(label_pretrainer.parameters()),
-            **settings["optimizer"]["rmsprop"],
-        ),
+        optimizer,
+        scheduler,
         settings["trainer"]["pretrain"],
     )
 
@@ -105,9 +113,9 @@ if __name__ == "__main__":
 
     if args.wandb_track:
         try:
-            trainer.train(ssl_only=args.ssl_only)
+            trainer.train(ssl_only=args.ssl_only, settings['data']['data_name'])
         finally:
             wandb.finish()
 
     else:
-        trainer.train(ssl_only=args.ssl_only)
+        trainer.train(ssl_only=args.ssl_only, settings['data']['data_name'])

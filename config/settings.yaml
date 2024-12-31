@@ -11,6 +11,7 @@ label_pretrainer:
   use_batch_norm: true
 
 optimizer:
+  warmup: 1000
   rmsprop:
     lr: 0.0003
   adam:
