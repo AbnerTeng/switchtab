@@ -1,6 +1,6 @@
 # switchtab
 
-Unofficial implementation of "SwitchTab: Switched Autoencoders Are Effective Tabular Learners"
+A more comprehensive unofficial implementation of "SwitchTab: Switched Autoencoders Are Effective Tabular Learners"
 
 ## Installation
 
